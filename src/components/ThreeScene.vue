@@ -221,16 +221,6 @@ export default {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     },
 
-    // 复位某个骨骼位置，撤销拆分效果
-    resetBone(bone) {
-      this.boneManager.resetBone(bone);
-    },
-
-    // 拆分某个骨骼，播放爆炸动画效果
-    explodeBone(bone) {
-      this.boneManager.explodeBone(bone);
-    },
-
     // 初始化dat.GUI控制面板，绑定控制参数和回调
     initGUI() {
       this.gui = new GUI();
@@ -266,6 +256,15 @@ export default {
         .onChange((value) => {
           this.scene.background.set(value); // 改变Three.js场景背景颜色
         });
+    },
+    // 复位某个骨骼位置，撤销拆分效果
+    resetBone(bone) {
+      this.boneManager.resetBone(bone);
+    },
+
+    // 拆分某个骨骼，播放爆炸动画效果
+    explodeBone(bone) {
+      this.boneManager.explodeBone(bone);
     },
     // 爆炸拆分全部骨骼
     explodeAllBones() {

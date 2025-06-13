@@ -73,21 +73,44 @@ export default class BoneManager {
    * @param {THREE.Object3D} mesh - 被点击的骨骼网格
    * @returns {THREE.Object3D|null} bone - 返回选中的骨骼
    */
+  // selectBone(mesh) {
+  //   const bone = this.bones.find((b) => b.uuid === mesh.uuid);
+  //   if (!bone) return null;
+
+  //   // 计算拆分的目标位置，基于当前拆分距离
+  //   const newPos = bone.position
+  //     .clone()
+  //     .add(new THREE.Vector3(this.splitDistance, this.splitDistance, 0));
+
+  //   // 使用Tween动画平滑移动到新位置
+  //   new TWEEN.Tween(bone.position).to(newPos, 500).start();
+
+  //   return bone;
+  // }
   selectBone(mesh) {
-    const bone = this.bones.find((b) => b.uuid === mesh.uuid);
+    // 确认传入的是 Mesh
+    if (!mesh.isMesh) return null;
+
+    // 找到对应骨骼 Mesh
+    const bone = this.bones.find(b => b.uuid === mesh.uuid);
     if (!bone) return null;
 
-    // 计算拆分的目标位置，基于当前拆分距离
-    const newPos = bone.position
-      .clone()
-      .add(new THREE.Vector3(this.splitDistance, this.splitDistance, 0));
+    // 计算拆分方向（你也可以自定义更合理方向）
+    const offset = new THREE.Vector3(this.splitDistance, this.splitDistance, 0);
 
-    // 使用Tween动画平滑移动到新位置
-    new TWEEN.Tween(bone.position).to(newPos, 500).start();
+    // 目标位置 = 原始位置 + 偏移（避免多次点击叠加）
+    const origPos = this.originalPositions.get(bone.uuid);
+    if (!origPos) return null;
+
+    const newPos = origPos.clone().add(offset);
+
+    // Tween 动画移动到目标位置
+    new TWEEN.Tween(bone.position)
+      .to(newPos, 500)
+      .start();
 
     return bone;
   }
-
   /**
    * 重置骨骼到原始位置
    * @param {THREE.Object3D} bone
