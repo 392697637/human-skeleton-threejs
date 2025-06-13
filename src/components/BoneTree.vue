@@ -14,78 +14,81 @@
         :key="index"
         :node="node"
         @select="select"
-        
       />
-      
     </ul>
   </div>
 </template>
 
 <script>
-import TreeNode from './TreeNode.vue'
+import TreeNode from "./TreeNode.vue";
 
 export default {
   components: { TreeNode },
   props: {
-  //   tree: {
-  //     type: Array,
-  //     default: () => []
-  // }
-  tree: {
-    type: Object, // ✅ 改成 Object 类型
-    required: true
-  }
-},
+    //   tree: {
+    //     type: Array,
+    //     default: () => []
+    // }
+    tree: {
+      type: Object, // ✅ 改成 Object 类型
+      required: true,
+    },
+  },
   data() {
     return {
-      searchText: '',
-      filteredTree: []
-    }
+      searchText: "",
+      filteredTree: [],
+    };
   },
   watch: {
     tree: {
       immediate: true,
       handler(newTree) {
-        this.filteredTree = newTree ? [newTree] : []
-      }
-    }
+        this.filteredTree = newTree ? [newTree] : [];
+      },
+    },
   },
   methods: {
     select(bone) {
-      this.$emit('select', bone)
+      this.$emit("select", bone);
     },
     onSearch() {
       if (!this.searchText.trim()) {
-        this.filteredTree = this.tree ? [this.tree] : []
-        return
+        this.filteredTree = this.tree ? [this.tree] : [];
+        return;
       }
-      this.filteredTree = this.filterTree(this.tree, this.searchText.trim().toLowerCase())
+      this.filteredTree = this.filterTree(
+        this.tree,
+        this.searchText.trim().toLowerCase(),
+      );
     },
     filterTree(node, searchText) {
-      if (!node) return []
-      const boneName = (node.bone.name || '').toLowerCase()
+      if (!node) return [];
+      const boneName = (node.bone.name || "").toLowerCase();
       const children = node.children
         ? node.children
-            .map(child => this.filterTree(child, searchText))
-            .filter(child => child.length)
-        : []
+            .map((child) => this.filterTree(child, searchText))
+            .filter((child) => child.length)
+        : [];
 
       if (boneName.includes(searchText) || children.length > 0) {
-        return [{
-          bone: node.bone,
-          children: children.flat()
-        }]
+        return [
+          {
+            bone: node.bone,
+            children: children.flat(),
+          },
+        ];
       }
-      return []
-    }
-  }
-}
+      return [];
+    },
+  },
+};
 </script>
 
 <style>
 .bone-tree {
   position: absolute;
-  top: 20px;
+  top: 100px;
   left: 20px; /* 左侧显示 */
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid #ccc;
@@ -96,7 +99,7 @@ export default {
   z-index: 15;
   font-size: 14px;
   border-radius: 6px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 .bone-tree ul {
   list-style: none;
