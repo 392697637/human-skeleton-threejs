@@ -1,17 +1,23 @@
-<template>
+<!-- <template>
   <div ref="container" class="three-container"></div>
+</template> -->
+<template>
+  <div ref="container" class="three-container">
+    <BoneTree v-if="boneTree" :tree="boneTree" @select="onSelectBone" />
+  </div>
 </template>
-
 <script>
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
-import BoneManager from './BoneManager'
-import ParticlesEffect from './ParticlesEffect'
+import BoneManager from './js/BoneManager'
+import ParticlesEffect from './js/ParticlesEffect'
 import { GUI } from 'dat.gui'  // 导入dat.gui库
+import BoneTree from './BoneTree.vue'
 
 export default {
   emits: ['boneSelected'],
+  components: { BoneTree },
   data() {
     return {
       scene: null,            // Three.js 场景对象
@@ -30,7 +36,8 @@ export default {
         lightColor: '#ffffff',      // 环境光颜色，白色
         lightIntensity: 0.8,        // 环境光亮度
         backgroundColor: '#202020'  // 场景背景色，深灰色
-      }
+      },
+      boneTree: null
     }
   },
   mounted() {
@@ -71,39 +78,23 @@ export default {
       this.ambientLight = new THREE.AmbientLight(this.params.lightColor, this.params.lightIntensity)
       this.scene.add(this.ambientLight)
     },
-
-    // // 使用GLTFLoader加载骨骼模型，并初始化骨骼管理和粒子特效
-    // loadModel() {
-    //   const loader = new GLTFLoader()
-    //   loader.load('/models/lkn_by_get3dmodels.glb', (gltf) => {
-    //     const model = gltf.scene
-    //     this.scene.add(model)
-
-    //     // 传入模型根节点和拆分距离，创建骨骼管理器
-    //     this.boneManager = new BoneManager(model, this.params.splitDistance)
-
-    //     // 创建粒子特效系统
-    //     this.particleSystem = new ParticlesEffect(this.scene)
-
-    //     // 开始动画渲染循环
-    //     this.animate()
-    //   })
-    // },
     loadModel() {
       const loader = new GLTFLoader()
       loader.load('/models/lkn_by_get3dmodels.glb', (gltf) => {
-        const model = gltf.scene
-        this.scene.add(model)
-        // 传入模型根节点和拆分距离，创建骨骼管理器
-        this.boneManager = new BoneManager(model)
-        // const treeData = this.boneManager.buildBoneTree()
-        // this.$emit('boneTreeReady', treeData)
-        this.boneManager = new BoneManager(model)
-        this.$emit('boneTreeReady', this.boneManager.getBoneTree())
-        // 创建粒子特效系统
-        this.particleSystem = new ParticlesEffect(this.scene)
-        // 开始动画渲染循环
-        this.animate()
+        try {
+          const model = gltf.scene
+          this.scene.add(model)
+          // 传入模型根节点和拆分距离，创建骨骼管理器
+          this.boneManager = new BoneManager(model)
+          this.boneTree = this.boneManager.getBoneTree() // 获取树形结构
+          this.$emit('boneTreeReady', this.boneTree)
+
+          this.particleSystem = new ParticlesEffect(this.scene);  // 创建粒子特效系统
+          this.animate(); // 开始动画渲染循环
+        } catch (ex) {
+          console.log("模型加载错误", ex)
+        }
+
       })
     },
     selectBoneFromTree(bone) {
@@ -111,6 +102,7 @@ export default {
       this.controls.target.copy(bone.position)
       this.$emit('boneSelected', bone)
     },
+    
     onClick(event) {
       const rect = this.$refs.container.getBoundingClientRect()
       this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
@@ -189,6 +181,13 @@ export default {
       this.gui.addColor(this.params, 'backgroundColor').name('背景颜色').onChange(value => {
         this.scene.background.set(value)      // 改变Three.js场景背景颜色
       })
+    },
+    onSelectBone(bone) {
+      if (!bone) return
+      this.particleSystem.showEffect(bone)
+      this.controls.target.copy(bone.position) // 摄像机聚焦选中骨骼
+      this.controls.update()
+      this.$emit('boneSelected', bone)
     }
   }
 }

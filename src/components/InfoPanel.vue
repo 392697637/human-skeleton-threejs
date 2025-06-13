@@ -1,26 +1,33 @@
 <template>
-  <div 
-    class="info-panel" 
-    :style="panelStyle"
-  >
-    <div class="arrow"></div>
-    <button @click="$emit('close')" class="close-btn">关闭</button>
-    <h3>骨骼信息</h3>
-    <p>名称: {{ bone.name }}</p>
+  <div class="info-panel" :style="panelStyle" v-if="bone">
+    <h3>{{ bone.name || '无名骨骼' }}</h3>
+    <!-- 这里可以放更多骨骼详情 -->
   </div>
 </template>
 
-
 <script>
 export default {
+  name: 'InfoPanel',
   props: {
     bone: Object,
-    pos: Object,
-    distance: Number
+    pos: {
+      type: Object,
+      default: () => ({ x: 0, y: 0 })
+    },
+    distance: {
+      type: Number,
+      default: 0
+    }
   },
   computed: {
     panelStyle() {
-      // 弹窗位置（跟随点击）
+      if (!this.pos || typeof this.pos.x !== 'number' || typeof this.pos.y !== 'number') {
+        return {
+          opacity: 0,
+          pointerEvents: 'none'
+        }
+      }
+  // 弹窗位置（跟随点击）
       const baseTransform = `translate(-50%, -110%)`
 
       // 根据距离控制缩放，距离越远，缩放越小，最小0.5，最大1.5
@@ -31,17 +38,26 @@ export default {
       let scale = maxScale - (this.distance / maxDistance) * (maxScale - minScale)
       scale = Math.min(maxScale, Math.max(minScale, scale))
 
-      // 根据距离控制透明度，远透明度低，近透明度高
+ // 根据距离控制透明度，远透明度低，近透明度高
       const minOpacity = 0.4
       const maxOpacity = 1.0
       let opacity = maxOpacity - (this.distance / maxDistance) * (maxOpacity - minOpacity)
       opacity = Math.min(maxOpacity, Math.max(minOpacity, opacity))
 
       return {
+        position: 'absolute',
         top: this.pos.y + 'px',
         left: this.pos.x + 'px',
         transform: `${baseTransform} scale(${scale})`,
         opacity: opacity,
+        pointerEvents: 'auto',
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        color: '#fff',
+        padding: '8px 12px',
+        borderRadius: '4px',
+        whiteSpace: 'nowrap',
+        userSelect: 'none',
+        transition: 'opacity 0.3s, transform 0.3s'
       }
     }
   }

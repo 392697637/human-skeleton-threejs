@@ -1,3 +1,4 @@
+// 粒子特效逻辑（缓慢流动，爆炸等动画效果）
 import * as THREE from 'three'
 import TWEEN from '@tweenjs/tween.js'
 

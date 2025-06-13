@@ -1,3 +1,4 @@
+<!-- 骨骼树形结构 -->
 <template>
   <div class="bone-tree">
     <h4>骨骼结构（左侧）</h4>
@@ -14,6 +15,7 @@
         :node="node"
         @select="select"
       />
+      
     </ul>
   </div>
 </template>
@@ -23,7 +25,12 @@ import TreeNode from './TreeNode.vue'
 
 export default {
   components: { TreeNode },
-  props: ['tree'],
+  props: {
+    tree: {
+      type: Array,
+      default: () => []
+  }
+},
   data() {
     return {
       searchText: '',

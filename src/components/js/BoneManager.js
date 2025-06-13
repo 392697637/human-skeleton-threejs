@@ -1,3 +1,4 @@
+// 递归骨骼节点管理、骨骼选中状态、高亮和拆分动画
 import * as THREE from 'three'
 import TWEEN from '@tweenjs/tween.js'
 
@@ -83,16 +84,51 @@ export default class BoneManager {
   setSplitDistance(distance) {
     this.splitDistance = distance
   }
-  getBoneTree() {
-    const buildTree = (bone) => {
-      const children = bone.children
-        .filter(child => this.bones.includes(child))
-        .map(child => buildTree(child))
-      return { bone, children }
-    }
-  
-    const roots = this.model.children.filter(c => this.bones.includes(c))
-    return buildTree(roots[0]) // 以第一个 mesh 为根节点构建树
-  }
+  // getBoneTree() {
+  //   const buildTree = (bone) => {
+  //     const children = bone.children
+  //       .filter(child => this.bones.includes(child))
+  //       .map(child => buildTree(child))
+  //     return { bone, children }
+  //   }
 
+  //   const roots = this.model.children.filter(c => this.bones.includes(c))
+  //   return buildTree(roots[0]) // 以第一个 mesh 为根节点构建树
+  // }
+  getBoneTree() {
+    const map = new Map()
+    const roots = []
+
+    // 第一次遍历：建立所有节点
+    this.model.traverse(child => {
+      if (child.isMesh) {
+        map.set(child.uuid, {
+          name: child.name || 'Unnamed Bone',
+          bone: child,
+          children: []
+        })
+      }
+    })
+
+    // 第二次遍历：建立父子关系
+    this.model.traverse(child => {
+      if (child.isMesh) {
+        const node = map.get(child.uuid)
+        const parent = child.parent
+        const parentNode = map.get(parent?.uuid)
+        if (parentNode) {
+          parentNode.children.push(node)
+        } else {
+          roots.push(node) // 没有父节点的，认为是根节点
+        }
+      }
+    })
+
+    // 返回一个虚拟的根节点（防止 BoneTree 组件报错）
+    return {
+      name: '根骨骼',
+      bone: null,
+      children: roots
+    }
+  }
 }

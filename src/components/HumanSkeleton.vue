@@ -1,3 +1,4 @@
+<!-- 主Vue组件，渲染ThreeScene，InfoPanel，BoneTree，传递交互数据 -->
 <template>
   <div class="skeleton-container">
     <ThreeScene ref="scene" @boneSelected="handleBoneSelected" @boneTreeReady="handleBoneTree" />
