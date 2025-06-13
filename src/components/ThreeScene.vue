@@ -1,40 +1,43 @@
 <template>
   <div ref="container" class="three-container">
+    <!-- 如果骨骼树数据存在，则显示骨骼树组件，绑定选择事件 -->
     <BoneTree v-if="boneTree" :tree="boneTree" @select="onSelectBone" />
   </div>
 </template>
 <script>
-import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import BoneManager from "./js/BoneManager";
-import ParticlesEffect from "./js/ParticlesEffect";
-import { GUI } from "dat.gui"; // 导入dat.gui库
-import BoneTree from "./BoneTree.vue";
+import * as THREE from "three"; // 导入Three.js核心库
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"; // glTF模型加载器
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls"; // 轨道控制器
+import BoneManager from "./js/BoneManager"; // 自定义骨骼管理类
+import ParticlesEffect from "./js/ParticlesEffect"; // 自定义粒子特效类
+import { GUI } from "dat.gui"; // dat.GUI界面控制库
+import BoneTree from "./BoneTree.vue"; // 骨骼树组件
 
 export default {
-  emits: ["boneSelected"],
+  emits: ["boneSelected"], // 组件向外派发 boneSelected 事件
   components: { BoneTree },
   data() {
     return {
       scene: null, // Three.js 场景对象
-      camera: null, // 摄像机
-      renderer: null, // 渲染器
-      raycaster: new THREE.Raycaster(), // 射线检测工具
-      mouse: new THREE.Vector2(), // 鼠标坐标（标准设备坐标系）
+      camera: null, // 摄像机对象
+      renderer: null, // 渲染器对象
+      raycaster: new THREE.Raycaster(), // 射线检测器，用于拾取模型
+      mouse: new THREE.Vector2(), // 鼠标坐标（归一化设备坐标）
+
       boneManager: null, // 骨骼管理器实例
       particleSystem: null, // 粒子特效实例
       ambientLight: null, // 环境光对象
       gui: null, // dat.GUI实例
 
-      // 可通过GUI调节的参数
+      // 可通过GUI调节的参数集合
       params: {
-        splitDistance: 0.3, // 骨骼拆分距离，默认0.3
-        lightColor: "#ffffff", // 环境光颜色，白色
-        lightIntensity: 0.8, // 环境光亮度
-        backgroundColor: "#202020", // 场景背景色，深灰色
+        splitDistance: 0.3, // 骨骼拆分距离（0~1）
+        lightColor: "#ffffff", // 环境光颜色
+        lightIntensity: 0.8, // 环境光强度
+        backgroundColor: "#202020", // 场景背景颜色
       },
-      boneTree: null,
+
+      boneTree: null, // 骨骼树数据（用于骨骼树组件展示）
     };
   },
   mounted() {
@@ -97,6 +100,7 @@ export default {
       );
       this.scene.add(this.ambientLight); // 将环境光添加到场景中
     },
+    // 加载glb模型，构建骨骼管理器和骨骼树
     loadModel() {
       // 创建一个 GLTFLoader 实例，用于加载 .glb / .gltf 格式的3D模型
       const loader = new GLTFLoader();
@@ -131,46 +135,74 @@ export default {
         }
       });
     },
+    // 当通过骨骼树组件选中某个骨骼时触发该方法
+    // 参数 bone 是被选中的骨骼对象
+    onSelectBone(bone) {
+      if (!bone) return; // 如果骨骼为空，则直接返回，避免报错
+
+      // 显示粒子特效，突出显示选中的骨骼
+      this.particleSystem.showEffect(bone);
+
+      // 将摄像机控制器的目标点设置为选中骨骼的位置，实现摄像机聚焦效果
+      this.controls.target.copy(bone.position);
+
+      // 更新控制器，使摄像机视角立即响应目标点的改变
+      this.controls.update();
+
+      // 向父组件派发“boneSelected”事件，传递当前选中的骨骼对象
+      this.$emit("boneSelected", bone);
+    },
     selectBoneFromTree(bone) {
       this.particleSystem.showEffect(bone);
       this.controls.target.copy(bone.position);
       this.$emit("boneSelected", bone);
     },
-
+    // 鼠标点击Three.js容器时触发，进行射线拾取以选中骨骼
     onClick(event) {
+      // 获取渲染容器在页面中的位置和尺寸，用于转换鼠标坐标
       const rect = this.$refs.container.getBoundingClientRect();
+
+      // 将鼠标点击的屏幕坐标转换为Three.js的标准设备坐标（范围从 -1 到 1）
       this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
+      // 利用摄像机和鼠标位置设置射线检测器
       this.raycaster.setFromCamera(this.mouse, this.camera);
+
+      // 计算射线与场景中所有对象的交点（true 表示递归检测子对象）
       const intersects = this.raycaster.intersectObjects(
         this.scene.children,
         true,
       );
 
+      // 如果有交点，说明点击到了某个物体
       if (intersects.length) {
+        // 通过骨骼管理器找到与第一个交点物体对应的骨骼
         const bone = this.boneManager.selectBone(intersects[0].object);
+
         if (bone) {
+          // 显示选中骨骼的粒子特效，增强视觉反馈
           this.particleSystem.showEffect(bone);
 
-          // 计算骨骼在世界空间的位置
+          // 获取骨骼在世界坐标系中的位置
           const boneWorldPos = new THREE.Vector3();
           bone.getWorldPosition(boneWorldPos);
 
-          // 计算相机与骨骼的距离
+          // 计算摄像机与骨骼之间的距离，用于后续显示或动画参考
           const distance = this.camera.position.distanceTo(boneWorldPos);
 
-          // 传递骨骼，点击位置和距离
+          // 向父组件派发事件，传递选中骨骼及点击的屏幕坐标和距离信息
           this.$emit("boneSelected", {
-            bone,
-            x: event.clientX,
-            y: event.clientY,
-            distance,
+            bone, // 被选中的骨骼对象
+            x: event.clientX, // 鼠标点击的水平屏幕坐标
+            y: event.clientY, // 鼠标点击的垂直屏幕坐标
+            distance, // 摄像机与骨骼的距离
           });
         }
       }
     },
-    // 渲染动画循环
+
+    // 渲染动画循环，持续更新画面和控制器状态
     animate() {
       requestAnimationFrame(this.animate);
       this.renderer.render(this.scene, this.camera);
@@ -189,12 +221,12 @@ export default {
       this.renderer.setSize(window.innerWidth, window.innerHeight);
     },
 
-    // 重置骨骼位置，复原拆分效果
+    // 复位某个骨骼位置，撤销拆分效果
     resetBone(bone) {
       this.boneManager.resetBone(bone);
     },
 
-    // 触发骨骼爆炸拆分动画
+    // 拆分某个骨骼，播放爆炸动画效果
     explodeBone(bone) {
       this.boneManager.explodeBone(bone);
     },
@@ -235,16 +267,11 @@ export default {
           this.scene.background.set(value); // 改变Three.js场景背景颜色
         });
     },
-    onSelectBone(bone) {
-      if (!bone) return;
-      this.particleSystem.showEffect(bone);
-      this.controls.target.copy(bone.position); // 摄像机聚焦选中骨骼
-      this.controls.update();
-      this.$emit("boneSelected", bone);
-    },
+    // 爆炸拆分全部骨骼
     explodeAllBones() {
       this.boneManager.explodeAllBones();
     },
+    // 恢复全部骨骼到初始状态
     resetAllBones() {
       this.boneManager.resetAllBones();
     },
@@ -257,5 +284,6 @@ export default {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  /* 防止滚动条出现，保证全屏渲染 */
 }
 </style>

@@ -13,6 +13,8 @@
     <InfoPanel
       v-if="selectedBone"
       :bone="selectedBone"
+      :pos="panelPos"
+      :distance="panelDistance"
       @reset="handleReset"
       @explode="handleExplode"
     />
@@ -38,13 +40,17 @@ export default {
     return {
       selectedBone: null, // 当前选中的骨骼对象（点击骨骼或树节点时更新）
       boneTree: null, // 从 ThreeScene 传回的骨骼层级树结构
+      panelPos: { x: 0, y: 0 },
+      panelDistance: 0,
     };
   },
   methods: {
     // 接收 ThreeScene 发出的 boneSelected 事件，更新当前选中骨骼
-    boneSelected(bone) {
-      this.selectedBone = bone;
-    },
+    boneSelected({ bone, x, y, distance }) {
+    this.selectedBone = bone;
+    this.panelPos = { x, y };
+    this.panelDistance = distance;
+  },
 
     // 点击 InfoPanel 的“重置”按钮，恢复该骨骼位置，并取消选中
     handleReset() {
