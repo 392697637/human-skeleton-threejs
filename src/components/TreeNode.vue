@@ -25,6 +25,7 @@
         :node="child"
         :level="level + 1"
         @select="$emit('select', $event)"
+        @click.stop="$emit('select', node.bone)"
       />
     </ul>
   </li>

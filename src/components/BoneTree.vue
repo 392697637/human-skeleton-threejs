@@ -14,6 +14,7 @@
         :key="index"
         :node="node"
         @select="select"
+        
       />
       
     </ul>
@@ -26,9 +27,13 @@ import TreeNode from './TreeNode.vue'
 export default {
   components: { TreeNode },
   props: {
-    tree: {
-      type: Array,
-      default: () => []
+  //   tree: {
+  //     type: Array,
+  //     default: () => []
+  // }
+  tree: {
+    type: Object, // ✅ 改成 Object 类型
+    required: true
   }
 },
   data() {

@@ -189,6 +189,7 @@ export default {
       this.controls.update()
       this.$emit('boneSelected', bone)
     }
+    
   }
 }
 </script>

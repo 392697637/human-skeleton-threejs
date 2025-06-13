@@ -1,7 +1,7 @@
 <!-- 主Vue组件，渲染ThreeScene，InfoPanel，BoneTree，传递交互数据 -->
 <template>
   <div class="skeleton-container">
-    <ThreeScene ref="scene" @boneSelected="handleBoneSelected" @boneTreeReady="handleBoneTree" />
+    <ThreeScene ref="scene" @boneSelected="boneSelected" @boneTreeReady="handleBoneTree" />
     <InfoPanel v-if="selectedBone" :bone="selectedBone" @reset="handleReset" @explode="handleExplode" />
     <BoneTree v-if="boneTree" :tree="boneTree" @select="handleTreeSelect" />
   </div>
@@ -21,7 +21,7 @@ export default {
     }
   },
   methods: {
-    handleBoneSelected(bone) {
+    boneSelected(bone) {
       this.selectedBone = bone
     },
     handleReset() {
