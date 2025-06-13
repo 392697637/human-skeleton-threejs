@@ -83,6 +83,16 @@ export default class BoneManager {
   setSplitDistance(distance) {
     this.splitDistance = distance
   }
-
+  getBoneTree() {
+    const buildTree = (bone) => {
+      const children = bone.children
+        .filter(child => this.bones.includes(child))
+        .map(child => buildTree(child))
+      return { bone, children }
+    }
+  
+    const roots = this.model.children.filter(c => this.bones.includes(c))
+    return buildTree(roots[0]) // 以第一个 mesh 为根节点构建树
+  }
 
 }

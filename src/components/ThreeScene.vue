@@ -96,13 +96,20 @@ export default {
         this.scene.add(model)
         // 传入模型根节点和拆分距离，创建骨骼管理器
         this.boneManager = new BoneManager(model)
-        const treeData = this.boneManager.buildBoneTree()
-        this.$emit('boneTreeReady', treeData)
+        // const treeData = this.boneManager.buildBoneTree()
+        // this.$emit('boneTreeReady', treeData)
+        this.boneManager = new BoneManager(model)
+        this.$emit('boneTreeReady', this.boneManager.getBoneTree())
         // 创建粒子特效系统
         this.particleSystem = new ParticlesEffect(this.scene)
-           // 开始动画渲染循环
+        // 开始动画渲染循环
         this.animate()
       })
+    },
+    selectBoneFromTree(bone) {
+      this.particleSystem.showEffect(bone)
+      this.controls.target.copy(bone.position)
+      this.$emit('boneSelected', bone)
     },
     onClick(event) {
       const rect = this.$refs.container.getBoundingClientRect()

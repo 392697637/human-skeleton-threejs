@@ -1,8 +1,8 @@
 <template>
   <div class="skeleton-container">
-    <BoneTree v-if="boneTree" :tree="boneTree" @select="handleBoneSelected" />
-    <ThreeScene ref="scene" @boneTreeReady="boneTree = $event" @boneSelected="handleBoneSelected" />
+    <ThreeScene ref="scene" @boneSelected="handleBoneSelected" @boneTreeReady="handleBoneTree" />
     <InfoPanel v-if="selectedBone" :bone="selectedBone" @reset="handleReset" @explode="handleExplode" />
+    <BoneTree v-if="boneTree" :tree="boneTree" @select="handleTreeSelect" />
   </div>
 </template>
 
@@ -22,7 +22,6 @@ export default {
   methods: {
     handleBoneSelected(bone) {
       this.selectedBone = bone
-      this.$refs.scene.focusBone(bone) // 可添加此方法使相机聚焦
     },
     handleReset() {
       this.$refs.scene.resetBone(this.selectedBone)
@@ -30,15 +29,14 @@ export default {
     },
     handleExplode() {
       this.$refs.scene.explodeBone(this.selectedBone)
+    },
+    handleBoneTree(tree) {
+      this.boneTree = tree
+    },
+    handleTreeSelect(bone) {
+      this.$refs.scene.selectBoneFromTree(bone)
+      this.selectedBone = bone
     }
   }
 }
 </script>
-
-<style>
-.skeleton-container {
-  display: flex;
-  width: 100vw;
-  height: 100vh;
-}
-</style>

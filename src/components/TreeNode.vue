@@ -1,14 +1,20 @@
 <template>
   <li>
-    <div @click="$emit('select', node.bone)" style="cursor: pointer;">
-      📎 {{ node.bone.name || '无名骨骼' }}
+    <div @click="toggle" :style="{ paddingLeft: (level * 16) + 'px' }">
+      <span
+        @click.stop="$emit('select', node.bone)"
+        style="cursor: pointer;"
+        :title="node.bone.name || '无名骨骼'"
+      >
+        {{ isOpen ? '📂' : '📁' }} {{ node.bone.name || '无名骨骼' }}
+      </span>
     </div>
-    <ul v-if="node.children && node.children.length">
-      <!-- ✅ 递归调用本组件 -->
+    <ul v-show="isOpen" v-if="node.children && node.children.length">
       <TreeNode
         v-for="(child, index) in node.children"
         :key="index"
         :node="child"
+        :level="level + 1"
         @select="$emit('select', $event)"
       />
     </ul>
@@ -17,7 +23,30 @@
 
 <script>
 export default {
-  name: 'TreeNode', // ✅ 关键点：设置组件名供递归识别
-  props: ['node']
+  name: 'TreeNode',
+  props: {
+    node: Object,
+    level: {
+      type: Number,
+      default: 0
+    }
+  },
+  data() {
+    return {
+      isOpen: true
+    }
+  },
+  methods: {
+    toggle() {
+      this.isOpen = !this.isOpen
+    }
+  }
 }
 </script>
+
+<style scoped>
+li {
+  margin: 2px 0;
+  user-select: none;
+}
+</style>
